@@ -28,14 +28,9 @@ jobs:
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: b1bfef0cff3b03f048d6c065fba5cbee
-          filename: test-badge.svg
+          filename: test.json
           label: tests
           message: ${{ job.status }}
           color: ${{ job.status == 'success' && 'green' || 'red' }}
           namedLogo: go
           style: flat
-      - name: Upload badge
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-badge
-          path: .github/badges/test-badge.svg
