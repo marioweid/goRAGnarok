@@ -28,7 +28,7 @@ jobs:
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: b1bfef0cff3b03f048d6c065fba5cbee
-          filename: test.json
+          filename: action_badge.json
           label: tests
           message: ${{ job.status }}
           color: ${{ job.status == 'success' && 'green' || 'red' }}
