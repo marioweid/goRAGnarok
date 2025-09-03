@@ -6,4 +6,6 @@ services:
     ports:
       - "8080:8080"
     command: ["/app/goRAGnarok"]
+    env_file:
+      - .env
     restart: unless-stopped
