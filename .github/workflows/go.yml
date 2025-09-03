@@ -24,7 +24,7 @@ jobs:
           name: test-results
           path: test-results.txt
       - name: Generate badge
-        uses: schneegans/dynamic-badges-action@v1.6.0
+        uses: schneegans/dynamic-badges-action@v1.7.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: b1bfef0cff3b03f048d6c065fba5cbee
