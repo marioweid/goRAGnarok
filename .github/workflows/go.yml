@@ -27,14 +27,13 @@ jobs:
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GITHUB_TOKEN }}
-          gitID: b1bfef0cff3b03f048d6c065fba5cbee
+          gistID: b1bfef0cff3b03f048d6c065fba5cbee
           filename: test-badge.svg
           label: tests
           message: ${{ job.status }}
           color: ${{ job.status == 'success' && 'green' || 'red' }}
           namedLogo: go
           style: flat
-          outputDir: .github/badges
       - name: Upload badge
         uses: actions/upload-artifact@v4
         with:
