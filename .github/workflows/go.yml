@@ -32,7 +32,7 @@ jobs:
           color: ${{ job.status == 'success' && 'green' || 'red' }}
           namedLogo: go
           style: flat
-          badgeFileName: test-badge.svg
+          filename: test-badge.svg
           outputDir: .github/badges
       - name: Upload badge
         uses: actions/upload-artifact@v4
