@@ -26,7 +26,7 @@ jobs:
       - name: Generate badge
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
-          auth: ${{ secrets.GITHUB_TOKEN }}
+          auth: ${{ secrets.GIST_SECRET }}
           gistID: b1bfef0cff3b03f048d6c065fba5cbee
           filename: test-badge.svg
           label: tests
