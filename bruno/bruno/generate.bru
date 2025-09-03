@@ -1,0 +1,22 @@
+meta {
+  name: generate
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/v1/generate
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "model": "gpt-4.1-nano",
+    "messages": [
+      {"role": "user", "content": "Hello!"},
+      {"role": "assistant", "content": "Hi, how can I help you?"}
+    ],
+    "temperature": 0.4
+  }
+}
