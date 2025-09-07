@@ -1,0 +1,17 @@
+meta {
+  name: response
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/v1/response
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "input": "Tell me a three sentence bedtime story about a unicorn."
+  }
+}
