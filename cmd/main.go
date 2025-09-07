@@ -1,30 +1,32 @@
 package main
 
 import (
-	"fmt"
-	"goRAGnarok/internal"
-	"goRAGnarok/pkg"
+	"log"
 	"net/http"
 	"os"
+
+	"goRAGnarok/internal"
+	"goRAGnarok/internal/handlers"
+	"goRAGnarok/pkg"
 )
 
 func main() {
-	// Load environment variables from .env file
 	if err := pkg.LoadEnv(".env"); err != nil {
-		fmt.Println("Warning: .env file not loaded:", err)
+		log.Println("Warning: .env file not loaded:", err)
 	}
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		fmt.Println("Warning: OPENAI_API_KEY is not set")
-	} else {
-		fmt.Printf("apiKey=%s\n", apiKey)
+		log.Fatal("OPENAI_API_KEY is not set. Please set it in your environment or .env file before starting the server.")
 	}
 
-	http.HandleFunc("/health", internal.HealthCheckHandler)
-	http.HandleFunc("/v1/generate", internal.PostHandler)
-	fmt.Println("Server running on :8080")
+	srv := &internal.Server{APIKey: apiKey}
+
+	http.HandleFunc("/health", handlers.HealthCheckHandler)
+	http.HandleFunc("/v1/response", handlers.ResponseHandler(srv))
+
+	log.Println("Server running on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Println("Server error:", err)
+		log.Fatal("Server error:", err)
 	}
 }
