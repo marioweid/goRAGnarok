@@ -1,0 +1,17 @@
+meta {
+  name: embed
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/v1/embeddings
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "input": "Tell me a three sentence bedtime story about a unicorn."
+  }
+}

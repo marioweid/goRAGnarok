@@ -1,5 +1,6 @@
 package internal
 
 type Server struct {
-	APIKey string
+	APIKey  string
+	BaseURL string
 }

@@ -20,10 +20,16 @@ func main() {
 		log.Fatal("OPENAI_API_KEY is not set. Please set it in your environment or .env file before starting the server.")
 	}
 
-	srv := &internal.Server{APIKey: apiKey}
+	baseURL := os.Getenv("OPENAI_BASE_URL")
+	if baseURL == "" {
+		baseURL = "https://api.openai.com/v1"
+	}
+
+	srv := &internal.Server{APIKey: apiKey, BaseURL: baseURL}
 
 	http.HandleFunc("/health", handlers.HealthCheckHandler)
 	http.HandleFunc("/v1/response", handlers.ResponseHandler(srv))
+	http.HandleFunc("/v1/embeddings", handlers.EmbeddingsHandler(srv))
 
 	log.Println("Server running on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

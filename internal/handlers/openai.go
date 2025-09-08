@@ -9,6 +9,7 @@ import (
 )
 
 func ResponseHandler(s *internal.Server) http.HandlerFunc {
+	// TODO: datatypes for responses
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -26,13 +27,70 @@ func ResponseHandler(s *internal.Server) http.HandlerFunc {
 			req.Model = "gpt-4.1"
 		}
 
-		payload := map[string]interface{}{
+		payload := map[string]any{
 			"model": req.Model,
 			"input": req.Input,
 		}
 		payloadBytes, _ := json.Marshal(payload)
 		client := &http.Client{}
-		openaiReq, err := http.NewRequest("POST", "https://api.openai.com/v1/responses", bytes.NewReader(payloadBytes))
+		url := s.BaseURL + "/responses"
+		openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+		if err != nil {
+			http.Error(w, "Failed to create request", http.StatusInternalServerError)
+			return
+		}
+		openaiReq.Header.Set("Content-Type", "application/json")
+		openaiReq.Header.Set("Authorization", "Bearer "+s.APIKey)
+
+		resp, err := client.Do(openaiReq)
+		if err != nil {
+			http.Error(w, "Failed to call OpenAI API", http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(resp.StatusCode)
+		io.Copy(w, resp.Body)
+	}
+}
+
+func EmbeddingsHandler(s *internal.Server) http.HandlerFunc {
+	// TODO: embedd as function
+	// TODO: datatypes for responses
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		var req struct {
+			Input          string `json:"input"`
+			Model          string `json:"model"`
+			EncodingFormat string `json:"encoding_format"`
+		}
+
+		// Decode the request body
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		// Set default values if not provided
+		if req.Model == "" {
+			req.Model = "text-embedding-3-small"
+		}
+		if req.EncodingFormat == "" {
+			req.EncodingFormat = "float"
+		}
+		payload := map[string]any{
+			"input":           req.Input,
+			"model":           req.Model,
+			"encoding_format": req.EncodingFormat,
+		}
+		payloadBytes, _ := json.Marshal(payload)
+		client := &http.Client{}
+		url := s.BaseURL + "/embeddings"
+		openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
 		if err != nil {
 			http.Error(w, "Failed to create request", http.StatusInternalServerError)
 			return
