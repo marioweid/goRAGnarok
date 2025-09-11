@@ -1,0 +1,19 @@
+meta {
+  name: similarity
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/v1/similarity-search
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "input": "What are pydantic ai agents?",
+    "top_n": 5
+  }
+  
+}
