@@ -8,6 +8,24 @@ import (
 	"net/http"
 )
 
+func CallOpenAIEmbeddings(s *internal.Server, input, model, encodingFormat string) (*http.Response, error) {
+	payload := map[string]any{
+		"input":           input,
+		"model":           model,
+		"encoding_format": encodingFormat,
+	}
+	payloadBytes, _ := json.Marshal(payload)
+	client := &http.Client{}
+	url := s.BaseURL + "/embeddings"
+	req, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.APIKey)
+	return client.Do(req)
+}
+
 func ResponseHandler(s *internal.Server) http.HandlerFunc {
 	// TODO: datatypes for responses
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -56,8 +74,6 @@ func ResponseHandler(s *internal.Server) http.HandlerFunc {
 }
 
 func EmbeddingsHandler(s *internal.Server) http.HandlerFunc {
-	// TODO: embedd as function
-	// TODO: datatypes for responses
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -69,36 +85,19 @@ func EmbeddingsHandler(s *internal.Server) http.HandlerFunc {
 			EncodingFormat string `json:"encoding_format"`
 		}
 
-		// Decode the request body
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		// Set default values if not provided
 		if req.Model == "" {
 			req.Model = "text-embedding-3-small"
 		}
 		if req.EncodingFormat == "" {
 			req.EncodingFormat = "float"
 		}
-		payload := map[string]any{
-			"input":           req.Input,
-			"model":           req.Model,
-			"encoding_format": req.EncodingFormat,
-		}
-		payloadBytes, _ := json.Marshal(payload)
-		client := &http.Client{}
-		url := s.BaseURL + "/embeddings"
-		openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
-		if err != nil {
-			http.Error(w, "Failed to create request", http.StatusInternalServerError)
-			return
-		}
-		openaiReq.Header.Set("Content-Type", "application/json")
-		openaiReq.Header.Set("Authorization", "Bearer "+s.APIKey)
 
-		resp, err := client.Do(openaiReq)
+		resp, err := CallOpenAIEmbeddings(s, req.Input, req.Model, req.EncodingFormat)
 		if err != nil {
 			http.Error(w, "Failed to call OpenAI API", http.StatusInternalServerError)
 			return
