@@ -9,7 +9,7 @@ package database
 type SearchResult struct {
 	ID        int       `json:"id" db:"id"`
 	URL       string    `json:"url" db:"url"`
-	Title     string    `json:"title,omitempty" db:"title"`
-	Content   string    `json:"content,omitempty" db:"content"`
-	Embedding []float64 `json:"embedding" db:"embedding"`
+	Title     string    `json:"title" db:"title"`
+	Content   string    `json:"content" db:"content"`
+	Embedding []float32 `json:"embedding" db:"embedding"`
 }

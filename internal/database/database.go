@@ -1,9 +1,12 @@
 package database
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 // SearchResult represents a row returned from similarity search.
@@ -12,14 +15,14 @@ import (
 // SimilaritySearch finds the top N most similar vectors in the database.
 func SimilaritySearch(ctx context.Context, db *sql.DB, input []float32, topN int) ([]SearchResult, error) {
 	// Convert Go slice to PostgreSQL array literal
-	vectorStr := fmt.Sprintf("ARRAY[%s]", float32SliceToString(input)) // TODO  Continue here
+	vectorStr := fmt.Sprintf("[%s]", float32SliceToString(input))
 
 	query := `
-        SELECT id, vector, (vector <-> $1::vector) AS score, title, content
-        FROM articles
-        ORDER BY vector <-> $1::vector
-        LIMIT $2
-    `
+	    SELECT id, url, title, content, embedding
+	    FROM public.doc_sections
+	    ORDER BY embedding <-> $1::vector
+	    LIMIT $2
+	`
 	rows, err := db.QueryContext(ctx, query, vectorStr, topN)
 	if err != nil {
 		return nil, err
@@ -29,11 +32,14 @@ func SimilaritySearch(ctx context.Context, db *sql.DB, input []float32, topN int
 	var results []SearchResult
 	for rows.Next() {
 		var r SearchResult
-		var pgVector []byte
-		if err := rows.Scan(&r.ID, &pgVector, &r.Embedding, &r.Title, &r.Content); err != nil {
+		var pgVector []byte // Postgres returns json string bytes
+		if err := rows.Scan(&r.ID, &r.URL, &r.Title, &r.Content, &pgVector); err != nil {
 			return nil, err
 		}
-		r.Embedding = parsePGVector(pgVector)
+		r.Embedding, err = parsePGVector(pgVector)
+		if err != nil {
+			return nil, err
+		}
 		results = append(results, r)
 	}
 	return results, rows.Err()
@@ -52,9 +58,25 @@ func float32SliceToString(vec []float32) string {
 }
 
 // parsePGVector parses PostgreSQL vector byte slice to []float32.
-// Implement this based on your pgvector driver or use a library.
-// For now, returns nil.
-func parsePGVector(pg []byte) []float32 {
-	// TODO: Implement parsing if needed
-	return nil
+func parsePGVector(pg []byte) ([]float32, error) {
+	s := string(bytes.TrimSpace(pg))
+	s = strings.TrimPrefix(s, "[")
+	s = strings.TrimSuffix(s, "]")
+
+	if s == "" {
+		return []float32{}, nil
+	}
+
+	parts := strings.Split(s, ",")
+	vec := make([]float32, len(parts)) // allocate memory for size of list
+
+	// parse every single entry to float32
+	for i, p := range parts {
+		f, err := strconv.ParseFloat(strings.TrimSpace(p), 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid float %q: %w", p, err)
+		}
+		vec[i] = float32(f)
+	}
+	return vec, nil
 }
