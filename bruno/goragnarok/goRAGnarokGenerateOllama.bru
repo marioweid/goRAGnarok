@@ -1,0 +1,22 @@
+meta {
+  name: goRAGnarokGenerateOllama
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/v1/similarity-search
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "model": "gemma3:4b",
+    "prompt":"Why is the sky blue?"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

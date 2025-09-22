@@ -18,6 +18,7 @@ func main() {
 		log.Println("Warning: .env file not loaded:", err)
 	}
 
+	// Check OpenAI config in OpenAI Handler
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		log.Fatal("OPENAI_API_KEY is not set. Please set it in your environment or .env file before starting the server.")
