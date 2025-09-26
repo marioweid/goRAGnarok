@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"goRAGnarok/internal"
 	"goRAGnarok/internal/database"
+	"goRAGnarok/internal/interfaces"
 	"io"
 	"net/http"
 )
@@ -20,7 +20,7 @@ type SimilaritySearchResponse struct {
 	Results []database.SearchResult `json:"results"`
 }
 
-func SimilaritySearchHandler(s *internal.Server, db *sql.DB) http.HandlerFunc {
+func SimilaritySearchHandler(s *interfaces.Server, db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

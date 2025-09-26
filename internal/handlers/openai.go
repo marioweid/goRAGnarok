@@ -3,12 +3,13 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"goRAGnarok/internal"
+	"fmt"
+	"goRAGnarok/internal/interfaces"
 	"io"
 	"net/http"
 )
 
-func CallOpenAIEmbeddings(s *internal.Server, input, model, encodingFormat string) (*http.Response, error) {
+func CallOpenAIEmbeddings(s *interfaces.Server, input, model, encodingFormat string) (*http.Response, error) {
 	payload := map[string]any{
 		"input":           input,
 		"model":           model,
@@ -26,13 +27,14 @@ func CallOpenAIEmbeddings(s *internal.Server, input, model, encodingFormat strin
 	return client.Do(req)
 }
 
-func ResponseHandler(s *internal.Server) http.HandlerFunc {
-	// TODO: datatypes for responses
+func ResponseHandler(providerLookup map[string]interfaces.Provider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// check correct http method
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+		// Parse request body
 		var req struct {
 			Model string `json:"model"`
 			Input string `json:"input"`
@@ -41,39 +43,21 @@ func ResponseHandler(s *internal.Server) http.HandlerFunc {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
+		// Gemma3 4b as default
 		if req.Model == "" {
-			req.Model = "gpt-4.1"
+			req.Model = "gemma3:4b"
 		}
-
-		payload := map[string]any{
-			"model": req.Model,
-			"input": req.Input,
-		}
-		payloadBytes, _ := json.Marshal(payload)
-		client := &http.Client{}
-		url := s.BaseURL + "/responses"
-		openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
-		if err != nil {
-			http.Error(w, "Failed to create request", http.StatusInternalServerError)
-			return
-		}
-		openaiReq.Header.Set("Content-Type", "application/json")
-		openaiReq.Header.Set("Authorization", "Bearer "+s.APIKey)
-
-		resp, err := client.Do(openaiReq)
-		if err != nil {
-			http.Error(w, "Failed to call OpenAI API", http.StatusInternalServerError)
-			return
-		}
-		defer resp.Body.Close()
-
+		llmResponse := providerLookup[req.Model].Generate()
+		fmt.Println(llmResponse)
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(resp.StatusCode)
-		io.Copy(w, resp.Body)
+		w.WriteHeader(http.StatusOK)
+
+		// Encode the struct into JSON
+		json.NewEncoder(w).Encode(llmResponse)
 	}
 }
 
-func EmbeddingsHandler(s *internal.Server) http.HandlerFunc {
+func EmbeddingsHandler(s *interfaces.Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			Input          string `json:"input"`

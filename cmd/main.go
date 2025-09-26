@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	"goRAGnarok/internal"
 	"goRAGnarok/internal/handlers"
+	"goRAGnarok/internal/interfaces"
+	"goRAGnarok/internal/providers"
 	"goRAGnarok/pkg"
 
 	_ "github.com/lib/pq"
@@ -29,7 +30,12 @@ func main() {
 		baseURL = "https://api.openai.com/v1"
 	}
 
-	srv := &internal.Server{APIKey: apiKey, BaseURL: baseURL}
+	// Context classes
+	srv := &interfaces.Server{APIKey: apiKey, BaseURL: baseURL}
+	providerLookup := make(map[string]interfaces.Provider)
+
+	providerLookup["gpt-4.1"] = &providers.OpenAiProvider{BaseURL: baseURL, ApiKey: apiKey}
+	providerLookup["gemma3:4b"] = &providers.OllamaProvider{BaseURL: "my_base_url"}
 
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -38,7 +44,8 @@ func main() {
 	defer db.Close()
 
 	http.HandleFunc("/health", handlers.HealthCheckHandler)
-	http.HandleFunc("/v1/response", handlers.ResponseHandler(srv))
+
+	http.HandleFunc("/v1/response", handlers.ResponseHandler(providerLookup))
 	http.HandleFunc("/v1/embeddings", handlers.EmbeddingsHandler(srv))
 	http.HandleFunc("/v1/similarity-search", handlers.SimilaritySearchHandler(srv, db))
 
