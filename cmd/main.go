@@ -35,7 +35,7 @@ func main() {
 	providerLookup := make(map[string]interfaces.Provider)
 
 	providerLookup["gpt-4.1"] = &providers.OpenAiProvider{BaseURL: baseURL, ApiKey: apiKey}
-	providerLookup["gemma3:4b"] = &providers.OllamaProvider{BaseURL: "my_base_url"}
+	providerLookup["gemma3:4b"] = &providers.OllamaProvider{BaseURL: "http://localhost:11434"}
 
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {

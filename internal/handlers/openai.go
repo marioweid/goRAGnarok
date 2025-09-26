@@ -35,10 +35,7 @@ func ResponseHandler(providerLookup map[string]interfaces.Provider) http.Handler
 			return
 		}
 		// Parse request body
-		var req struct {
-			Model string `json:"model"`
-			Input string `json:"input"`
-		}
+		var req interfaces.GenerateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
@@ -47,7 +44,11 @@ func ResponseHandler(providerLookup map[string]interfaces.Provider) http.Handler
 		if req.Model == "" {
 			req.Model = "gemma3:4b"
 		}
-		llmResponse := providerLookup[req.Model].Generate()
+		llmResponse, err := providerLookup[req.Model].Generate(req)
+		if err != nil {
+			http.Error(w, "Failed to create request", http.StatusInternalServerError)
+			return
+		}
 		fmt.Println(llmResponse)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

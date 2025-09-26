@@ -6,5 +6,5 @@ type Server struct {
 }
 
 type Provider interface {
-	Generate() string
+	Generate(request GenerateRequest) (string, error)
 }
