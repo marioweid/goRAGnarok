@@ -29,7 +29,7 @@ func ResponseHandler(providerLookup map[string]interfaces.Provider) http.Handler
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		llmResponse, err := providerLookup[req.Model].Generate(req)
+		llmResponse, err := providerLookup[req.Model].Generate(r.Context(), req)
 		if err != nil {
 			http.Error(w, "Failed to create request", http.StatusInternalServerError)
 			return
@@ -50,7 +50,7 @@ func EmbeddingsHandler(providerLookup map[string]interfaces.Provider) http.Handl
 			return
 		}
 
-		llmEmbeddings, err := providerLookup[req.Model].Embeddings(req)
+		llmEmbeddings, err := providerLookup[req.Model].Embeddings(r.Context(), req)
 		if err != nil {
 			http.Error(w, "Failed to create embeddings", http.StatusInternalServerError)
 			return

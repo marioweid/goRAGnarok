@@ -2,6 +2,7 @@ package providers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"goRAGnarok/internal/models"
@@ -26,7 +27,7 @@ func NewOllamaProvider(baseURL, embeddingModel string) *OllamaProvider {
 	}
 }
 
-func (ollamaProvider *OllamaProvider) Generate(request models.GenerateRequest) (models.AiResponse, error) {
+func (ollamaProvider *OllamaProvider) Generate(ctx context.Context, request models.GenerateRequest) (models.AiResponse, error) {
 	payload := map[string]any{
 		"model":  request.Model,
 		"prompt": request.Input,
@@ -34,7 +35,7 @@ func (ollamaProvider *OllamaProvider) Generate(request models.GenerateRequest) (
 	}
 	payloadBytes, _ := json.Marshal(payload)
 	url := ollamaProvider.BaseURL + "/api/generate"
-	ollamaReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	ollamaReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return models.AiResponse{}, err
 	}
@@ -70,7 +71,7 @@ func (ollamaProvider *OllamaProvider) Generate(request models.GenerateRequest) (
 	}, nil
 }
 
-func (ollamaProvider *OllamaProvider) Embeddings(request models.EmbeddingsRequest) (models.EmbeddingsResponse, error) {
+func (ollamaProvider *OllamaProvider) Embeddings(ctx context.Context, request models.EmbeddingsRequest) (models.EmbeddingsResponse, error) {
 	// Call Ollama for Embeddings
 	payload := map[string]any{
 		"prompt": request.Input,
@@ -78,7 +79,7 @@ func (ollamaProvider *OllamaProvider) Embeddings(request models.EmbeddingsReques
 	}
 	payloadBytes, _ := json.Marshal(payload)
 	url := ollamaProvider.BaseURL + "/api/embeddings"
-	ollamaReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	ollamaReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return models.EmbeddingsResponse{}, err
 	}

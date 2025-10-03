@@ -2,6 +2,7 @@ package providers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"goRAGnarok/internal/models"
@@ -28,14 +29,14 @@ func NewOpenAiProvider(baseURL, apiKey, embeddingModel string) *OpenAiProvider {
 	}
 }
 
-func (openAiProvider *OpenAiProvider) Generate(request models.GenerateRequest) (models.AiResponse, error) {
+func (openAiProvider *OpenAiProvider) Generate(ctx context.Context, request models.GenerateRequest) (models.AiResponse, error) {
 	payload := map[string]any{
 		"model": request.Model,
 		"input": request.Input,
 	}
 	payloadBytes, _ := json.Marshal(payload)
 	url := openAiProvider.BaseURL + "/responses"
-	openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	openaiReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return models.AiResponse{}, err
 	}
@@ -69,7 +70,7 @@ func (openAiProvider *OpenAiProvider) Generate(request models.GenerateRequest) (
 	}, nil
 }
 
-func (openAiProvider *OpenAiProvider) Embeddings(request models.EmbeddingsRequest) (models.EmbeddingsResponse, error) {
+func (openAiProvider *OpenAiProvider) Embeddings(ctx context.Context, request models.EmbeddingsRequest) (models.EmbeddingsResponse, error) {
 	// Call OpenAi for Embeddings
 	payload := map[string]any{
 		"input": request.Input,
@@ -77,7 +78,7 @@ func (openAiProvider *OpenAiProvider) Embeddings(request models.EmbeddingsReques
 	}
 	payloadBytes, _ := json.Marshal(payload)
 	url := openAiProvider.BaseURL + "/embeddings"
-	openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	openaiReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return models.EmbeddingsResponse{}, err
 	}

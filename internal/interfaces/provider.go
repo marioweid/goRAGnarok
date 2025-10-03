@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"context"
 	"goRAGnarok/internal/models"
 )
 
@@ -10,6 +11,6 @@ type Server struct {
 }
 
 type Provider interface {
-	Generate(request models.GenerateRequest) (models.AiResponse, error)
-	Embeddings(request models.EmbeddingsRequest) (models.EmbeddingsResponse, error)
+	Generate(ctx context.Context, request models.GenerateRequest) (models.AiResponse, error)
+	Embeddings(ctx context.Context, request models.EmbeddingsRequest) (models.EmbeddingsResponse, error)
 }
