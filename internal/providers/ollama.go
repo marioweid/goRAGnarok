@@ -3,49 +3,51 @@ package providers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"goRAGnarok/internal/models"
 	"io"
 	"net/http"
+	"time"
 )
 
-type OllamaMessageContent struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type OllamaMessage struct {
-	Role    string                 `json:"role"`
-	Content []OllamaMessageContent `json:"content"`
-}
-
-type OllamaResponse struct {
-	Model    string `json:"model"`
-	Response string `json:"response"`
-}
-
 type OllamaProvider struct {
-	BaseURL string
+	BaseURL        string
+	EmbeddingModel string
+	client         *http.Client
 }
 
-func (openAiProvider *OllamaProvider) Generate(request models.GenerateRequest) (models.AiResponse, error) {
+func NewOllamaProvider(baseURL, embeddingModel string) *OllamaProvider {
+	return &OllamaProvider{
+		BaseURL:        baseURL,
+		EmbeddingModel: embeddingModel,
+		client: &http.Client{
+			Timeout: time.Second * 30,
+		},
+	}
+}
+
+func (ollamaProvider *OllamaProvider) Generate(request models.GenerateRequest) (models.AiResponse, error) {
 	payload := map[string]any{
 		"model":  request.Model,
 		"prompt": request.Input,
 		"stream": false,
 	}
 	payloadBytes, _ := json.Marshal(payload)
-	client := &http.Client{}
-	url := openAiProvider.BaseURL + "/api/generate"
-	openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	url := ollamaProvider.BaseURL + "/api/generate"
+	ollamaReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return models.AiResponse{}, err
 	}
-	openaiReq.Header.Set("Content-Type", "application/json")
+	ollamaReq.Header.Set("Content-Type", "application/json")
 
 	// Send request
-	resp, err := client.Do(openaiReq)
+	resp, err := ollamaProvider.client.Do(ollamaReq)
 	if err != nil {
 		return models.AiResponse{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return models.AiResponse{}, fmt.Errorf("ollama API error: status %d", resp.StatusCode)
 	}
 
 	// Read the response body as a string
@@ -54,7 +56,7 @@ func (openAiProvider *OllamaProvider) Generate(request models.GenerateRequest) (
 		return models.AiResponse{}, err
 	}
 
-	var ollamaResponse OllamaResponse
+	var ollamaResponse models.OllamaResponse
 	err = json.Unmarshal(respBody, &ollamaResponse)
 	if err != nil {
 		return models.AiResponse{}, err
@@ -68,24 +70,26 @@ func (openAiProvider *OllamaProvider) Generate(request models.GenerateRequest) (
 	}, nil
 }
 
-func (openAiProvider *OllamaProvider) Embeddings(request models.EmbeddingsRequest) (models.EmbeddingsResponse, error) {
-	// Call OpenAi for Embeddings
-	// TODO
+func (ollamaProvider *OllamaProvider) Embeddings(request models.EmbeddingsRequest) (models.EmbeddingsResponse, error) {
+	// Call Ollama for Embeddings
 	payload := map[string]any{
-		"input": request.Input,
-		"model": request.Model,
+		"prompt": request.Input,
+		"model":  ollamaProvider.EmbeddingModel,
 	}
 	payloadBytes, _ := json.Marshal(payload)
-	client := &http.Client{}
-	url := openAiProvider.BaseURL + "/embeddings"
-	openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	url := ollamaProvider.BaseURL + "/api/embeddings"
+	ollamaReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return models.EmbeddingsResponse{}, err
 	}
-	openaiReq.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(openaiReq)
+	ollamaReq.Header.Set("Content-Type", "application/json")
+	resp, err := ollamaProvider.client.Do(ollamaReq)
 	if err != nil {
 		return models.EmbeddingsResponse{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return models.EmbeddingsResponse{}, fmt.Errorf("ollama API error: status %d", resp.StatusCode)
 	}
 
 	// Prepare response
@@ -94,11 +98,11 @@ func (openAiProvider *OllamaProvider) Embeddings(request models.EmbeddingsReques
 		return models.EmbeddingsResponse{}, err
 	}
 
-	var openAiResponse models.OpenAiResponse
-	err = json.Unmarshal(respBody, &openAiResponse)
+	var ollamaEmbeddings models.OllamaEmbeddingsResponse
+	err = json.Unmarshal(respBody, &ollamaEmbeddings)
 	if err != nil {
 		return models.EmbeddingsResponse{}, err
 	}
 	defer resp.Body.Close()
-	return models.EmbeddingsResponse{}, nil
+	return models.EmbeddingsResponse{Model: ollamaProvider.EmbeddingModel, Embeddings: ollamaEmbeddings.Embedding}, nil
 }

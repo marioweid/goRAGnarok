@@ -1,6 +1,8 @@
 package interfaces
 
-import "goRAGnarok/internal/models"
+import (
+	"goRAGnarok/internal/models"
+)
 
 type Server struct {
 	BaseURL string

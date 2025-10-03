@@ -3,15 +3,29 @@ package providers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"goRAGnarok/internal/models"
 	"io"
 	"net/http"
+	"time"
 )
 
 type OpenAiProvider struct {
 	BaseURL        string
 	ApiKey         string
 	EmbeddingModel string
+	client         *http.Client
+}
+
+func NewOpenAiProvider(baseURL, apiKey, embeddingModel string) *OpenAiProvider {
+	return &OpenAiProvider{
+		BaseURL:        baseURL,
+		ApiKey:         apiKey,
+		EmbeddingModel: embeddingModel,
+		client: &http.Client{
+			Timeout: time.Second * 30,
+		},
+	}
 }
 
 func (openAiProvider *OpenAiProvider) Generate(request models.GenerateRequest) (models.AiResponse, error) {
@@ -20,7 +34,6 @@ func (openAiProvider *OpenAiProvider) Generate(request models.GenerateRequest) (
 		"input": request.Input,
 	}
 	payloadBytes, _ := json.Marshal(payload)
-	client := &http.Client{}
 	url := openAiProvider.BaseURL + "/responses"
 	openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
@@ -29,9 +42,13 @@ func (openAiProvider *OpenAiProvider) Generate(request models.GenerateRequest) (
 	openaiReq.Header.Set("Content-Type", "application/json")
 	openaiReq.Header.Set("Authorization", "Bearer "+openAiProvider.ApiKey)
 
-	resp, err := client.Do(openaiReq)
+	resp, err := openAiProvider.client.Do(openaiReq)
 	if err != nil {
 		return models.AiResponse{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return models.AiResponse{}, fmt.Errorf("ollama API error: status %d", resp.StatusCode)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -59,7 +76,6 @@ func (openAiProvider *OpenAiProvider) Embeddings(request models.EmbeddingsReques
 		"model": openAiProvider.EmbeddingModel,
 	}
 	payloadBytes, _ := json.Marshal(payload)
-	client := &http.Client{}
 	url := openAiProvider.BaseURL + "/embeddings"
 	openaiReq, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
 	if err != nil {
@@ -67,9 +83,13 @@ func (openAiProvider *OpenAiProvider) Embeddings(request models.EmbeddingsReques
 	}
 	openaiReq.Header.Set("Content-Type", "application/json")
 	openaiReq.Header.Set("Authorization", "Bearer "+openAiProvider.ApiKey)
-	resp, err := client.Do(openaiReq)
+	resp, err := openAiProvider.client.Do(openaiReq)
 	if err != nil {
 		return models.EmbeddingsResponse{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return models.EmbeddingsResponse{}, fmt.Errorf("ollama API error: status %d", resp.StatusCode)
 	}
 
 	// Prepare response

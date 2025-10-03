@@ -1,0 +1,22 @@
+meta {
+  name: LocalEmbeddings
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:11434/api/embeddings
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "model": "all-minilm",
+    "prompt":"Why is the sky blue?"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
