@@ -1,5 +1,5 @@
 meta {
-  name: embed
+  name: embeddings
   type: http
   seq: 3
 }
@@ -12,6 +12,7 @@ post {
 
 body:json {
   {
-    "input": "Tell me a three sentence bedtime story about a unicorn."
+    "model": "gemma3:4b",
+    "input":"Why is the sky blue?"
   }
 }
