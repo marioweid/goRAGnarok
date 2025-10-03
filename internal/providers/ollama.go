@@ -21,7 +21,7 @@ func NewOllamaProvider(baseURL, embeddingModel string) *OllamaProvider {
 		BaseURL:        baseURL,
 		EmbeddingModel: embeddingModel,
 		client: &http.Client{
-			Timeout: time.Second * 30,
+			Timeout: time.Second * 120, // Because my MacBook 2020 is a potato
 		},
 	}
 }

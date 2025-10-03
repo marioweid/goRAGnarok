@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"os"
 
 	"goRAGnarok/internal/handlers"
 	"goRAGnarok/internal/interfaces"
@@ -26,10 +25,10 @@ func main() {
 	providerLookup := make(map[string]interfaces.Provider)
 
 	ollamaProvider := providers.NewOllamaProvider(cfg.OllamaBaseURL, cfg.OllamaEmbeddingModel)
+	openAiProvider := providers.NewOpenAiProvider(cfg.OpenAIBaseURL, cfg.OpenAIAPIKey, cfg.OpenAIEmbeddingModel)
 
 	providerLookup["gemma3:4b"] = ollamaProvider
-	providerLookup["gpt-4.1"] = &providers.OpenAiProvider{BaseURL: cfg.OpenAIBaseURL, ApiKey: cfg.OpenAIAPIKey, EmbeddingModel: cfg.OpenAIEmbeddingModel}
-	providerLookup["gemma3:4b"] = &providers.OllamaProvider{BaseURL: cfg.OllamaBaseURL, EmbeddingModel: cfg.OllamaEmbeddingModel}
+	providerLookup["gpt-4.1"] = openAiProvider
 
 	db, err := sql.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
