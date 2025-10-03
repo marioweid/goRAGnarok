@@ -34,7 +34,7 @@ func main() {
 	srv := &interfaces.Server{APIKey: apiKey, BaseURL: baseURL}
 	providerLookup := make(map[string]interfaces.Provider)
 
-	providerLookup["gpt-4.1"] = &providers.OpenAiProvider{BaseURL: baseURL, ApiKey: apiKey}
+	providerLookup["gpt-4.1"] = &providers.OpenAiProvider{BaseURL: baseURL, ApiKey: apiKey, EmbeddingModel: "text-embedding-3-small"}
 	providerLookup["gemma3:4b"] = &providers.OllamaProvider{BaseURL: "http://localhost:11434"}
 
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -46,7 +46,7 @@ func main() {
 	http.HandleFunc("/health", handlers.HealthCheckHandler)
 
 	http.HandleFunc("/v1/response", handlers.ResponseHandler(providerLookup))
-	http.HandleFunc("/v1/embeddings", handlers.EmbeddingsHandler(srv))
+	http.HandleFunc("/v1/embeddings", handlers.EmbeddingsHandler(providerLookup))
 	http.HandleFunc("/v1/similarity-search", handlers.SimilaritySearchHandler(srv, db))
 
 	log.Println("Server running on :8080")

@@ -1,17 +1,19 @@
 meta {
-  name: response
+  name: embeddings
   type: http
-  seq: 1
+  seq: 2
 }
 
 post {
-  url: {{base_url}}/v1/response
+  url: {{base_url}}/v1/embeddings
   body: json
   auth: inherit
 }
 
 body:json {
   {
+    "model": "gpt-4.1",
     "input": "Tell me a three sentence bedtime story about a unicorn."
   }
+  
 }
