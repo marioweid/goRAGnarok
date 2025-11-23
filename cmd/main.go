@@ -41,6 +41,7 @@ func main() {
 	http.HandleFunc("/v1/response", handlers.ResponseHandler(providerLookup))
 	http.HandleFunc("/v1/embeddings", handlers.EmbeddingsHandler(providerLookup))
 	http.HandleFunc("/v1/similarity-search", handlers.SimilaritySearchHandler(srv, db))
+	http.HandleFunc("/v1/rag", handlers.RAGHandler(srv, db, providerLookup))
 
 	log.Println("Server running on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
